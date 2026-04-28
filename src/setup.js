@@ -1,13 +1,7 @@
-import {
-  BoxGeometry,
-  Color,
-  Mesh,
-  MeshNormalMaterial,
-  PerspectiveCamera,
-  Scene,
-  WebGLRenderer,
-} from "three";
+import { Color, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls";
+
+import Cube from "./cube";
 
 function setupWorld(update) {
   // World setup
@@ -20,7 +14,9 @@ function setupWorld(update) {
   );
 
   scene.background = new Color(0x1a1a1a);
-  camera.position.z = 4;
+  camera.position.x = 2;
+  camera.position.y = 2;
+  camera.position.z = 2;
 
   const renderer = new WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -30,12 +26,12 @@ function setupWorld(update) {
   controls.enableDamping = true;
 
   // Objects
-  const cube = new Mesh(new BoxGeometry(1, 1, 1), new MeshNormalMaterial());
+  const cube = new Cube();
   scene.add(cube);
 
   // Updates setup
-  renderer.setAnimationLoop(() => {
-    update(cube);
+  renderer.setAnimationLoop((time) => {
+    update({ cube }, time);
 
     controls.update();
     renderer.render(scene, camera);
