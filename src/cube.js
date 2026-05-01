@@ -44,6 +44,15 @@ class Cube extends Group {
       inside: new MeshBasicMaterial({ color: "black" }),
     };
 
+    // DEBUG
+    // for (const material in materials) {
+    //   if (material === "inside") {
+    //     materials[material].colorWrite = false;
+    //   } else {
+    //     materials[material].wireframe = true;
+    //   }
+    // }
+
     // Cubies
     const SPACING = 1.05;
     for (let z = -1; z <= 1; z++) {

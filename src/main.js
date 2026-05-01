@@ -2,10 +2,11 @@ import "./style.css";
 
 import setupWorld from "./setup";
 
-let turned = false;
+let timer = 0;
 setupWorld(({ cube }, time) => {
-  if (!turned && time > 5000) {
-    cube.turnFace("right");
-    turned = true;
+  if (time - timer > 2000) {
+    // cube.turnFace("right");
+
+    timer = time;
   }
 });
