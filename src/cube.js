@@ -3,31 +3,18 @@ import { BoxGeometry, Group, Mesh, MeshBasicMaterial, Vector3 } from "three";
 import { getTurnQuaternions } from "./utils";
 
 class Cube extends Group {
-  static faces = Object.freeze({
-    right: {
-      condition: (position) => Math.round(position.x) === 1,
-      ...getTurnQuaternions(new Vector3(1, 0, 0)),
-    },
-    left: {
-      condition: (position) => Math.round(position.x) === -1,
-      ...getTurnQuaternions(new Vector3(-1, 0, 0)),
-    },
-    up: {
-      condition: (position) => Math.round(position.y) === 1,
-      ...getTurnQuaternions(new Vector3(0, 1, 0)),
-    },
-    down: {
-      condition: (position) => Math.round(position.y) === -1,
-      ...getTurnQuaternions(new Vector3(0, -1, 0)),
-    },
-    front: {
-      condition: (position) => Math.round(position.z) === 1,
-      ...getTurnQuaternions(new Vector3(0, 0, 1)),
-    },
-    back: {
-      condition: (position) => Math.round(position.z) === -1,
-      ...getTurnQuaternions(new Vector3(0, 0, -1)),
-    },
+  static moves = Object.freeze({
+    R: { axis: "x", layer: 1, ...getTurnQuaternions(new Vector3(1, 0, 0)) },
+    M: { axis: "x", layer: 0, ...getTurnQuaternions(new Vector3(-1, 0, 0)) },
+    L: { axis: "x", layer: -1, ...getTurnQuaternions(new Vector3(-1, 0, 0)) },
+
+    U: { axis: "y", layer: 1, ...getTurnQuaternions(new Vector3(0, 1, 0)) },
+    E: { axis: "y", layer: 0, ...getTurnQuaternions(new Vector3(0, -1, 0)) },
+    D: { axis: "y", layer: -1, ...getTurnQuaternions(new Vector3(0, -1, 0)) },
+
+    F: { axis: "z", layer: 1, ...getTurnQuaternions(new Vector3(0, 0, 1)) },
+    S: { axis: "z", layer: 0, ...getTurnQuaternions(new Vector3(0, 0, -1)) },
+    B: { axis: "z", layer: -1, ...getTurnQuaternions(new Vector3(0, 0, -1)) },
   });
 
   constructor() {
@@ -37,8 +24,8 @@ class Cube extends Group {
     const materials = {
       right: new MeshBasicMaterial({ color: "red" }),
       left: new MeshBasicMaterial({ color: "orange" }),
-      up: new MeshBasicMaterial({ color: "white" }),
-      down: new MeshBasicMaterial({ color: "yellow" }),
+      top: new MeshBasicMaterial({ color: "white" }),
+      bottom: new MeshBasicMaterial({ color: "yellow" }),
       front: new MeshBasicMaterial({ color: "green" }),
       back: new MeshBasicMaterial({ color: "blue" }),
       inside: new MeshBasicMaterial({ color: "black" }),
@@ -61,8 +48,8 @@ class Cube extends Group {
           const cubie = new Mesh(geometry, [
             x === 1 ? materials.right : materials.inside,
             x === -1 ? materials.left : materials.inside,
-            y === 1 ? materials.up : materials.inside,
-            y === -1 ? materials.down : materials.inside,
+            y === 1 ? materials.top : materials.inside,
+            y === -1 ? materials.bottom : materials.inside,
             z === 1 ? materials.front : materials.inside,
             z === -1 ? materials.back : materials.inside,
           ]);
@@ -77,12 +64,14 @@ class Cube extends Group {
     this.add(this.turningPivot);
   }
 
-  turnFace(face, clockwise = true) {
-    if (!(face in Cube.faces)) throw new Error("Invalid face");
+  turn(layer, clockwise = true) {
+    const move = Cube.moves[layer];
+    if (!move) throw new Error("Invalid move");
 
     const turningCubies = this.children.filter(
       (child) =>
-        child instanceof Mesh && Cube.faces[face].condition(child.position),
+        child instanceof Mesh &&
+        Math.round(child.position[move.axis]) === move.layer,
     );
 
     // Reset pivot
@@ -94,9 +83,7 @@ class Cube extends Group {
 
     // Rotate the pivot
     this.turningPivot.quaternion.multiply(
-      clockwise
-        ? Cube.faces[face].clockwiseQuaternion
-        : Cube.faces[face].anticlockwiseQuaternion,
+      clockwise ? move.clockwiseQuaternion : move.anticlockwiseQuaternion,
     );
     this.turningPivot.updateMatrixWorld();
 

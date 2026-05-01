@@ -9,3 +9,14 @@ export function getTurnQuaternions(axis) {
 
   return { clockwiseQuaternion, anticlockwiseQuaternion };
 }
+
+export function checkClockwise(layerPosition, rotationSign, rotationAxis) {
+  if (layerPosition !== 0) return layerPosition * rotationSign < 0;
+
+  // S follows F, but M and E follow L and D respectively
+  if (rotationAxis === "z") {
+    return rotationSign < 0;
+  } else {
+    return -rotationSign < 0;
+  }
+}

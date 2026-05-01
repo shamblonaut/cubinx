@@ -8,54 +8,53 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { TrackballControls } from "three/addons/controls/TrackballControls.js";
+import { TrackballControls } from "three/addons/controls/TrackballControls";
 
 import Cube from "./cube";
+import { checkClockwise } from "./utils";
 
-function setupWorld(update) {
-  // World setup
+function setupWorld() {
   const scene = new Scene();
+  scene.background = new Color(0x1a1a1a);
+
   const camera = new PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     0.1,
     1000,
   );
-
-  scene.background = new Color(0x1a1a1a);
   camera.position.set(5, 5, 5);
 
   const renderer = new WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
+  const { cube } = setupObjects(scene);
+  const controls = setupTrackballControls(camera, renderer);
+
+  setupGestures(camera, cube, controls);
+  setupUpdates(scene, camera, renderer, controls);
+}
+
+function setupObjects(scene) {
+  const cube = new Cube();
+  scene.add(cube);
+  return { cube };
+}
+
+function setupTrackballControls(camera, renderer) {
   const controls = new TrackballControls(camera, renderer.domElement);
+
   controls.target.set(0, 0, 0);
   controls.dynamicDampingFactor = 0.1;
   controls.rotateSpeed = 1.25;
   controls.noPan = true;
   controls.noZoom = true;
 
-  // Objects
-  const cube = new Cube();
-  scene.add(cube);
+  return controls;
+}
 
-  // Updates setup
-  renderer.setAnimationLoop((time) => {
-    update({ cube }, time);
-
-    controls.update();
-    renderer.render(scene, camera);
-  });
-  window.addEventListener("resize", () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
-    controls.handleResize();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-
-  // Setup gestures
+function setupGestures(camera, cube, controls) {
   const raycaster = new Raycaster();
   const pointer = new Vector2();
   const dragPlane = new Plane();
@@ -64,6 +63,7 @@ function setupWorld(update) {
 
   let dragInfo = null;
   let isDragging = false;
+
   window.addEventListener("pointerdown", (event) => {
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -71,23 +71,20 @@ function setupWorld(update) {
 
     const intersects = raycaster.intersectObject(cube, true);
     if (intersects.length > 0) {
-      controls.noRotate = true;
-
       const hit = intersects[0];
       const faceNormal = hit.face.normal
         .clone()
         .transformDirection(hit.object.matrixWorld)
         .round();
       dragPlane.setFromNormalAndCoplanarPoint(faceNormal, hit.point);
-
-      isDragging = true;
-      dragInfo = {
-        cubie: hit.object,
-        normal: faceNormal,
-      };
       startPoint.copy(hit.point);
+
+      dragInfo = { cubie: hit.object, normal: faceNormal };
+      isDragging = true;
+      controls.noRotate = true;
     }
   });
+
   window.addEventListener("pointerup", (event) => {
     if (!isDragging) return;
 
@@ -111,38 +108,34 @@ function setupWorld(update) {
     const rotationSign = Math.sign(cross[rotationAxis]); // -1 or +1
     const layerPosition = Math.round(dragInfo.cubie.position[rotationAxis]); // -1, 0, 1
 
-    const face =
-      rotationAxis === "x"
-        ? layerPosition === 1
-          ? "right"
-          : layerPosition === -1
-            ? "left"
-            : null
-        : rotationAxis === "y"
-          ? layerPosition === 1
-            ? "up"
-            : layerPosition === -1
-              ? "down"
-              : null
-          : rotationAxis === "z"
-            ? layerPosition === 1
-              ? "front"
-              : layerPosition === -1
-                ? "back"
-                : null
-            : null;
-    const clockwise = rotationSign * layerPosition < 0;
+    const layers = {
+      x: { 1: "R", 0: "M", "-1": "L" },
+      y: { 1: "U", 0: "E", "-1": "D" },
+      z: { 1: "F", 0: "S", "-1": "B" },
+    };
+    cube.turn(
+      layers[rotationAxis][layerPosition],
+      checkClockwise(layerPosition, rotationSign, rotationAxis),
+    );
 
-    if (face) {
-      cube.turnFace(face, clockwise);
-    } else {
-      console.warn("Turn not supported");
-    }
-
-    isDragging = false;
     dragInfo = null;
-
+    isDragging = false;
     controls.noRotate = false;
+  });
+}
+
+function setupUpdates(scene, camera, renderer, controls) {
+  renderer.setAnimationLoop(() => {
+    controls.update();
+    renderer.render(scene, camera);
+  });
+
+  window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    controls.handleResize();
   });
 }
 
