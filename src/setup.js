@@ -25,7 +25,7 @@ function setupWorld(update) {
   scene.background = new Color(0x1a1a1a);
   camera.position.set(5, 5, 5);
 
-  const renderer = new WebGLRenderer();
+  const renderer = new WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
