@@ -21,7 +21,7 @@ class Cube extends Group {
     D: { axis: "y", layer: -1, ...getTurnQuaternions(new Vector3(0, -1, 0)) },
 
     F: { axis: "z", layer: 1, ...getTurnQuaternions(new Vector3(0, 0, 1)) },
-    S: { axis: "z", layer: 0, ...getTurnQuaternions(new Vector3(0, 0, -1)) },
+    S: { axis: "z", layer: 0, ...getTurnQuaternions(new Vector3(0, 0, 1)) },
     B: { axis: "z", layer: -1, ...getTurnQuaternions(new Vector3(0, 0, -1)) },
   });
 
