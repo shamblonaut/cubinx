@@ -65,6 +65,8 @@ function setupGestures(camera, cube, controls) {
   let isDragging = false;
 
   window.addEventListener("pointerdown", (event) => {
+    if (cube.isTurning) return;
+
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);

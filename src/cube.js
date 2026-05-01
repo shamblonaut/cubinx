@@ -1,4 +1,12 @@
-import { BoxGeometry, Group, Mesh, MeshBasicMaterial, Vector3 } from "three";
+import {
+  BoxGeometry,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  Quaternion,
+  Vector3,
+} from "three";
+import gsap from "gsap";
 
 import { getTurnQuaternions } from "./utils";
 
@@ -62,11 +70,17 @@ class Cube extends Group {
     // Turning Pivot
     this.turningPivot = new Group();
     this.add(this.turningPivot);
+
+    // Turning animation
+    this.isTurning = false;
   }
 
   turn(layer, clockwise = true) {
     const move = Cube.moves[layer];
     if (!move) throw new Error("Invalid move");
+
+    if (this.isTurning) throw new Error("Cube is currently turning");
+    this.isTurning = true;
 
     const turningCubies = this.children.filter(
       (child) =>
@@ -81,14 +95,36 @@ class Cube extends Group {
     // Attach cubies to pivot
     turningCubies.forEach((cubie) => this.turningPivot.attach(cubie));
 
-    // Rotate the pivot
-    this.turningPivot.quaternion.multiply(
-      clockwise ? move.clockwiseQuaternion : move.anticlockwiseQuaternion,
+    // Setup quaternions for turn
+    const initialQuaternion = new Quaternion().copy(
+      this.turningPivot.quaternion,
     );
-    this.turningPivot.updateMatrixWorld();
+    const turnQuaternion = clockwise
+      ? move.clockwiseQuaternion
+      : move.anticlockwiseQuaternion;
 
-    // Attach cubies back to cube
-    turningCubies.forEach((cubie) => this.attach(cubie));
+    const animationState = { t: 0 };
+    gsap.to(animationState, {
+      t: 1,
+      duration: 0.3,
+      ease: "power2.inOut",
+      onUpdate: () => {
+        this.turningPivot.quaternion.slerpQuaternions(
+          initialQuaternion,
+          turnQuaternion,
+          animationState.t,
+        );
+      },
+      onComplete: () => {
+        // Apply rotation to world matrix
+        this.turningPivot.updateMatrixWorld();
+
+        // Attach cubies back to cube
+        turningCubies.forEach((cubie) => this.attach(cubie));
+
+        this.isTurning = false;
+      },
+    });
   }
 }
 
