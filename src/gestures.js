@@ -13,8 +13,6 @@ function setupGestures(camera, cube, controls, turnQueue) {
   let isDragging = false;
 
   window.addEventListener("pointerdown", (event) => {
-    if (cube.isTurning) return;
-
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
@@ -36,7 +34,12 @@ function setupGestures(camera, cube, controls, turnQueue) {
   });
 
   window.addEventListener("pointerup", (event) => {
-    if (!isDragging) return;
+    if (!isDragging || cube.isTurning) {
+      dragInfo = null;
+      isDragging = false;
+      controls.noRotate = false;
+      return;
+    }
 
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
